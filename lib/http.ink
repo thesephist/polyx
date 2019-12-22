@@ -4,6 +4,7 @@ std := load('../vendor/std')
 
 log := std.log
 f := std.format
+slice := std.slice
 each := std.each
 
 auth := load('auth')
@@ -13,40 +14,49 @@ route := load('route')
 
 new := () => (
 	router := (route.new)()
-	(route.catch)(router, req => {
-		status: 404
-		body: 'service not found'
-	})
 
-	start := port => listen('0.0.0.0:' + string(port), evt => evt.type :: {
-		'error' -> log('server start error: ' + evt.message)
-		'req' -> (
-			log(f('{{ method }}: {{ url }}', evt.data))
-			url := trimQP(evt.data.url)
+	` routes added to router here `
 
-			handleWithHeaders := evt => (
-				handler := (route.match)(router, url)
-				resp := handler(evt)
+	start := port => listen('0.0.0.0:' + string(port), evt => (
+		(route.catch)(router, params => req => {
+			status: 404
+			body: 'service not found'
+		})
 
-				resp.headers := hdr(resp.headers :: {
-					() -> {}
-					_ -> resp.headers
-				})
-				(evt.end)(resp)
+		evt.type :: {
+			'error' -> log('server start error: ' + evt.message)
+			'req' -> (
+				log(f('{{ method }}: {{ url }} "{{ body }}"', {
+					method: evt.data.method
+					url: evt.data.url
+					body: slice(evt.data.body, 0, 100)
+				}))
+				url := trimQP(evt.data.url)
+
+				handleWithHeaders := evt => (
+					handler := (route.match)(router, url)
+					resp := handler(evt.data)
+
+					resp.headers := hdr(resp.headers :: {
+						() -> {}
+						_ -> resp.headers
+					})
+					(evt.end)(resp)
+				)
+				[allow?(evt.data), evt.data.method] :: {
+					[true, 'GET'] -> handleWithHeaders(evt)
+					[true, 'POST'] -> handleWithHeaders(evt)
+					[true, 'PUT'] -> handleWithHeaders(evt)
+					[true, 'DELETE'] -> handleWithHeaders(evt)
+					_ -> (evt.end)({
+						status: 405
+						headers: hdr({})
+						body: 'method not allowed'
+					})
+				}
 			)
-			[allow?(evt.data), evt.data.method] :: {
-				[true, 'GET'] -> handleWithHeaders(evt.data)
-				[true, 'POST'] -> handleWithHeaders(evt.data)
-				[true, 'PUT'] -> handleWithHeaders(evt.data)
-				[true, 'DELETE'] -> handleWithHeaders(evt.data)
-				_ -> (evt.end)({
-					status: 405
-					headers: hdr({})
-					body: 'method not allowed'
-				})
-			}
-		)
-	})
+		}
+	))
 
 	{
 		addRoute: (url, handler) => (route.add)(router, url, handler)

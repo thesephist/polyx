@@ -1,10 +1,10 @@
 http := load('../lib/http')
 
-PORT := 7281
+PORT := 7280
 
 server := (http.new)()
 
 addRoute := server.addRoute
-`` addRoute('/static', staticHandler)
+addRoute('/static', params => req => {status: 200, body: 'wat'})
 
 (server.start)(PORT)
