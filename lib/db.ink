@@ -57,7 +57,7 @@ update := db => (collection, attrs, delta) => (
 	x := (db.get)(collection, attrs)
 	each(keys(delta), k => x.(k) := delta.(k))
 	(db.flush)()
-    x
+	x
 )
 
 ` retrieve the first matching instance of a collection `
