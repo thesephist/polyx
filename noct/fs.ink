@@ -1,19 +1,23 @@
 ` filesystem abstractions `
 
 std := load('../vendor/std')
+str := load('../vendor/str')
 
 log := std.log
 each := std.each
+slice := std.slice
+split := str.split
 
 ` return a recursive description of a file/directory `
 describe := (path, cb) => stat(path, evt => evt.type :: {
 	'error' -> cb(())
 	'data' -> evt.data.dir :: {
-		false -> cb({
+		false -> exec('shasum', [path], '', o => cb({
 			name: evt.data.name
 			len: evt.data.len
 			mod: evt.data.mod
-		})
+			hash: split(o, ' ').0
+		}))
 		true -> dir(path, devt => (
 			items := []
 			devt.type :: {
@@ -42,14 +46,17 @@ describe := (path, cb) => stat(path, evt => evt.type :: {
 	into a single flat list of paths `
 flatten := desc => (
 	items := {}
-	add := (path, mod) => items.(path) := mod
+	` to generate a sync plan, all paths should be absolute relative to 
+		the root dir of describe() `
+	trimPath := path => slice(path, len(desc.name) + 1, len(path))
+	add := (path, mod, hash) => items.trimPath(path) := {mod: mod, hash: hash}
 	flattenRec(desc, '', add)
 	items
 )
 
 flattenRec := (desc, pathPrefix, add) => (
 	desc.items :: {
-		() -> add(pathPrefix + '/' + desc.name, desc.mod)
+		() -> add(pathPrefix + '/' + desc.name, desc.mod, desc.hash)
 		_ -> each(desc.items, f => flattenRec(f, pathPrefix + '/' + desc.name, add))
 	}
 )
