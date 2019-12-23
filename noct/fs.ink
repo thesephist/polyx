@@ -11,21 +11,33 @@ slice := std.slice
 sliceList := std.sliceList
 split := str.split
 
+queue := load('../lib/queue')
+
 ` return a recursive description of a file/directory `
-describe := (path, cb) => stat(path, evt => evt.type :: {
-	'error' -> cb(())
-	'data' -> evt.data.dir :: {
-		` TODO: doing this massively in parallel causes UNIX
-			too many open files error, queue it `
-		false -> exec('shasum', [path], '', e => e .type :: {
-			'error' -> (log(e.message), cb(()))
-			_ -> cb({
-				name: evt.data.name
-				len: evt.data.len
-				mod: evt.data.mod
-				hash: split(e.data, ' ').0
-			})
-		})
+describe := (path, cb) => (
+	qu := (queue.new)(12) ` 12 concurrent child processes `
+	describeWithQueue(path, qu, cb)
+)
+
+describeWithQueue := (path, qu, cb) => stat(path, evt => [evt.type, evt.data] :: {
+	['error', _] -> cb(())
+	['data', ()] -> cb(())
+	['data', _] -> evt.data.dir :: {
+		false -> (qu.add)(qcb => exec('shasum', [path], '', e => (
+			e .type :: {
+				'error' -> (
+					log(e.message)
+					cb(())
+				)
+				_ -> cb({
+					name: evt.data.name
+					len: evt.data.len
+					mod: evt.data.mod
+					hash: split(e.data, ' ').0
+				})
+			}
+			qcb()
+		)))
 		true -> dir(path, devt => (
 			items := []
 			devt.type :: {
@@ -35,7 +47,7 @@ describe := (path, cb) => stat(path, evt => evt.type :: {
 						name: evt.data.name
 						items: items
 					})
-					_ -> each(devt.data, f => describe(path + '/' + f.name, desc => (
+					_ -> each(devt.data, f => describeWithQueue(path + '/' + f.name, qu, desc => (
 						items.len(items) := desc
 						len(items) :: {
 							len(devt.data) -> cb({

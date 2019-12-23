@@ -24,6 +24,12 @@ addRoute('/desc/*descPath', params => (_, end) => (
 		body: (json.ser)(desc)
 	}))
 ))
+addRoute('/desc/', _ => (_, end) => (
+	describe('.', desc => end({
+		status: 200
+		body: (json.ser)(desc)
+	}))
+))
 addRoute('/sync/*downPath', params => (req, end) => req.method :: {
 	'GET' -> (
 		downPath := params.downPath
