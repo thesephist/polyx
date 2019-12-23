@@ -4,20 +4,28 @@ std := load('../vendor/std')
 str := load('../vendor/str')
 
 log := std.log
+cat := std.cat
 each := std.each
+range := std.range
 slice := std.slice
+sliceList := std.sliceList
 split := str.split
 
 ` return a recursive description of a file/directory `
 describe := (path, cb) => stat(path, evt => evt.type :: {
 	'error' -> cb(())
 	'data' -> evt.data.dir :: {
-		false -> exec('shasum', [path], '', o => cb({
-			name: evt.data.name
-			len: evt.data.len
-			mod: evt.data.mod
-			hash: split(o, ' ').0
-		}))
+        ` TODO: doing this massively in parallel causes UNIX
+            too many open files error, queue it `
+        false -> exec('shasum', [path], '', e => e .type :: {
+            'error' -> (log(e.message), cb(()))
+            _ -> cb({
+                name: evt.data.name
+                len: evt.data.len
+                mod: evt.data.mod
+                hash: split(e.data, ' ').0
+            })
+        })
 		true -> dir(path, devt => (
 			items := []
 			devt.type :: {
@@ -59,4 +67,15 @@ flattenRec := (desc, pathPrefix, add) => (
 		() -> add(pathPrefix + '/' + desc.name, desc.mod, desc.hash)
 		_ -> each(desc.items, f => flattenRec(f, pathPrefix + '/' + desc.name, add))
 	}
+)
+
+ensureParentDirExists := (path, cb) => (
+    ` path is of the form a/b/c.ext `
+    parts := split(path, '/')
+    parentDir := cat(sliceList(parts, 0, len(parts) - 1))
+    (std.log)(parentDir)
+    make(parentDir, evt => evt.type :: {
+        'error' -> cb(())
+        _ -> cb(true)
+    })
 )

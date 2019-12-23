@@ -18,10 +18,10 @@ new := () => (
 	` routes added to router here `
 
 	start := port => listen('0.0.0.0:' + string(port), evt => (
-		(route.catch)(router, params => req => {
+		(route.catch)(router, params => (req, end) => end({
 			status: 404
 			body: 'service not found'
-		})
+		}))
 
 		evt.type :: {
 			'error' -> log('server start error: ' + evt.message)
@@ -35,13 +35,13 @@ new := () => (
 
 				handleWithHeaders := evt => (
 					handler := (route.match)(router, url)
-					resp := handler(evt.data)
-
-					resp.headers := hdr(resp.headers :: {
-						() -> {}
-						_ -> resp.headers
-					})
-					(evt.end)(resp)
+					handler(evt.data, resp => (
+						resp.headers := hdr(resp.headers :: {
+							() -> {}
+							_ -> resp.headers
+						})
+						(evt.end)(resp)
+					))
 				)
 				[allow?(evt.data), evt.data.method] :: {
 					[true, 'GET'] -> handleWithHeaders(evt)

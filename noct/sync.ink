@@ -2,7 +2,6 @@
 
 std := load('../vendor/std')
 
-log := std.log
 each := std.each
 
 fs := load('fs')
