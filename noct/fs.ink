@@ -15,17 +15,17 @@ split := str.split
 describe := (path, cb) => stat(path, evt => evt.type :: {
 	'error' -> cb(())
 	'data' -> evt.data.dir :: {
-        ` TODO: doing this massively in parallel causes UNIX
-            too many open files error, queue it `
-        false -> exec('shasum', [path], '', e => e .type :: {
-            'error' -> (log(e.message), cb(()))
-            _ -> cb({
-                name: evt.data.name
-                len: evt.data.len
-                mod: evt.data.mod
-                hash: split(e.data, ' ').0
-            })
-        })
+		` TODO: doing this massively in parallel causes UNIX
+			too many open files error, queue it `
+		false -> exec('shasum', [path], '', e => e .type :: {
+			'error' -> (log(e.message), cb(()))
+			_ -> cb({
+				name: evt.data.name
+				len: evt.data.len
+				mod: evt.data.mod
+				hash: split(e.data, ' ').0
+			})
+		})
 		true -> dir(path, devt => (
 			items := []
 			devt.type :: {
@@ -57,25 +57,29 @@ flatten := desc => (
 	` to generate a sync plan, all paths should be absolute relative to 
 		the root dir of describe() `
 	trimPath := path => slice(path, len(desc.name) + 1, len(path))
-	add := (path, mod, hash) => items.trimPath(path) := {mod: mod, hash: hash}
+	add := (path, mod, hash, size) => items.trimPath(path) := {
+		mod: mod
+		hash: hash
+		size: size
+	}
 	flattenRec(desc, '', add)
 	items
 )
 
 flattenRec := (desc, pathPrefix, add) => (
 	desc.items :: {
-		() -> add(pathPrefix + '/' + desc.name, desc.mod, desc.hash)
+		() -> add(pathPrefix + '/' + desc.name, desc.mod, desc.hash, desc.len)
 		_ -> each(desc.items, f => flattenRec(f, pathPrefix + '/' + desc.name, add))
 	}
 )
 
 ensureParentDirExists := (path, cb) => (
-    ` path is of the form a/b/c.ext `
-    parts := split(path, '/')
-    parentDir := cat(sliceList(parts, 0, len(parts) - 1))
-    (std.log)(parentDir)
-    make(parentDir, evt => evt.type :: {
-        'error' -> cb(())
-        _ -> cb(true)
-    })
+	` path is of the form a/b/c.ext `
+	parts := split(path, '/')
+	parentDir := cat(sliceList(parts, 0, len(parts) - 1))
+	(std.log)(parentDir)
+	make(parentDir, evt => evt.type :: {
+		'error' -> cb(())
+		_ -> cb(true)
+	})
 )
