@@ -1,5 +1,8 @@
 http := load('../lib/http')
 
+fs := load('fs')
+sync := load('sync')
+
 PORT := 7280
 
 server := (http.new)()
