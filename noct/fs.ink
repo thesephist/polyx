@@ -134,7 +134,10 @@ flattenRec := (desc, pathPrefix, add) => (
 ensureParentDirExists := (path, cb) => (
 	` path is of the form a/b/c.ext `
 	parts := split(path, '/')
-	parentDir := cat(sliceList(parts, 0, len(parts) - 1))
+	parentDir := (len(parts) :: {
+		1 -> parts.0
+		_ -> cat(sliceList(parts, 0, len(parts) - 1), '/')
+	})
 	make(parentDir, evt => evt.type :: {
 		'error' -> cb(())
 		_ -> cb(true)

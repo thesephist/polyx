@@ -16,6 +16,7 @@ sync := load('sync')
 cleanPath := fs.cleanPath
 describe := fs.describe
 flatten := fs.flatten
+ensurePDE := fs.ensureParentDirExists
 diff := sync.diff
 
 descRemote := (remote, path, cb) => req({
@@ -70,12 +71,17 @@ down := (remote, path, cb) => req({
 	'error' -> log('Failed to down: request error ' + evt.message)
 	'resp' -> evt.data.status :: {
 		200 -> (
-			writeFile(path, evt.data.body, r => r :: {
-				true -> (
-					log('down success: ' + path)
-					cb()
+			ensurePDE(path, r => r :: {
+				true -> writeFile(path, evt.data.body, r => r :: {
+					true -> (
+						log('down success: ' + path)
+						cb()
+					)
+					_ -> log('Failed to down: write error ' + evt.message)
+				})
+				_ -> (
+					log('Failed to down: could not mkdirp for ' + path)
 				)
-				_ -> log('Failed to down: write error ' + evt.message)
 			})
 		)
 		_ -> log('Failed to down: response code ' + string(evt.data.status))
