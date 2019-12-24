@@ -89,14 +89,14 @@ getPath := args => args.0 :: {
 }
 withDiff := opts => args => cb => (
 	descRemote(opts.remote, getPath(args), remoteDesc => (
-		describe(getPath(args), localDesc => (
+		describe(getPath(args), getPath(args) + '/ignore.txt', localDesc => (
 			cb(diff(flatten(localDesc), flatten(remoteDesc)))
 		))
 	))
 )
 desc := opts => args => (
 	opts.remote :: {
-		() -> describe(getPath(args), data => log(data))
+		() -> describe(getPath(args), getPath(args) + '/ignore.txt', data => log(data))
 		_ -> descRemote(opts.remote, getPath(args), data => log(data))
 	}
 )
@@ -115,21 +115,21 @@ plan := opts => args => (
 	}
 )
 sync := opts => args => (
-    maxConcurrency := 6
-    log(f('Syncing with {{ n }} workers', {n: maxConcurrency}))
+	maxConcurrency := 6
+	log(f('Syncing with {{ n }} workers', {n: maxConcurrency}))
 	qu := (queue.new)(maxConcurrency) ` 6 concurrent connections `
 	queueTask := qu.add
 
 	opts.remote :: {
 		() -> log('Missing remote')
 		_ -> withDiff(opts)(args)(df => (
-            each(keys(df), path => (
-                fullPath := cleanPath(path) ` path starts with a / here `
-                df.(path) :: {
-                    0 -> queueTask(cb => up(opts.remote, fullPath, cb))
-                    1 -> queueTask(cb => down(opts.remote, fullPath, cb))
-                })
-            )
+			each(keys(df), path => (
+				fullPath := cleanPath(path) ` path starts with a / here `
+				df.(path) :: {
+					0 -> queueTask(cb => up(opts.remote, fullPath, cb))
+					1 -> queueTask(cb => down(opts.remote, fullPath, cb))
+				})
+			)
 		))
 	}
 )

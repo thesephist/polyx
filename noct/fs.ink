@@ -6,11 +6,13 @@ str := load('../vendor/str')
 log := std.log
 cat := std.cat
 each := std.each
+filter := std.filter
 range := std.range
 slice := std.slice
 sliceList := std.sliceList
 split := str.split
 replace := str.replace
+readFile := std.readFile
 
 queue := load('../lib/queue')
 
@@ -29,15 +31,28 @@ cleanPath := path => (
 )
 
 ` return a recursive description of a file/directory `
-describe := (path, cb) => (
+describe := (path, ignoreFilePath, cb) => (
 	` all filesystem actions start at describe, so if we
 		cleanPath here, it covers all cases `
 	path := cleanPath(path)
 	qu := (queue.new)(12) ` 12 concurrent child processes `
-	describeWithQueue(path, qu, cb)
+
+	readFile(ignoreFilePath, file => file :: {
+		() -> describeWithQueue(path, qu, cb, () => true)
+		_ -> (
+			ignoreFiles := {}
+
+			file := replace(file, char(13), '') ` remove \r's `
+			lines := split(file, char(10))
+			names := filter(lines, s => ~(s = ''))
+			each(names, s => ignoreFiles.(s) := true)
+
+			describeWithQueue(path, qu, cb, s => ignoreFiles.(s) = ())
+		)
+	})
 )
 
-describeWithQueue := (path, qu, cb) => stat(path, evt => [evt.type, evt.data] :: {
+describeWithQueue := (path, qu, cb, include?) => stat(path, evt => [evt.type, evt.data] :: {
 	['error', _] -> cb({})
 	['data', ()] -> cb({})
 	['data', _] -> evt.data.dir :: {
@@ -65,15 +80,25 @@ describeWithQueue := (path, qu, cb) => stat(path, evt => [evt.type, evt.data] ::
 						name: evt.data.name
 						items: items
 					})
-					_ -> each(devt.data, f => describeWithQueue(path + '/' + f.name, qu, desc => (
-						items.len(items) := desc
-						len(items) :: {
-							len(devt.data) -> cb({
-								name: evt.data.name
-								items: items
-							})
-						}
-					)))
+					_ -> (
+						s := {found: 0}
+						cbIfDone := () => (
+							s.found := s.found + 1
+							s.found :: {
+								len(devt.data) -> cb({
+									name: evt.data.name
+									items: items
+								})
+							}
+						)
+						each(devt.data, f => include?(f.name) :: {
+							true -> describeWithQueue(path + '/' + f.name, qu, desc => (
+								items.len(items) := desc
+								cbIfDone()
+							), include?)
+							_ -> cbIfDone()
+						})
+					)
 				}
 			}
 		))

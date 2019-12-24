@@ -30,13 +30,13 @@ server := (http.new)()
 addRoute := server.addRoute
 addRoute('/desc/*descPath', params => (_, end) => (
 	descPath := ROOTFS + '/' + cleanPath(params.descPath)
-	describe(descPath, desc => end({
+	describe(descPath, ROOTFS + '/ignore.txt', desc => end({
 		status: 200
 		body: (json.ser)(desc)
 	}))
 ))
 addRoute('/desc/', _ => (_, end) => (
-	describe(ROOTFS, desc => end({
+	describe(ROOTFS, ROOTFS + '/ignore.txt', desc => end({
 		status: 200
 		body: (json.ser)(desc)
 	}))
