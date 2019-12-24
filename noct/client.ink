@@ -1,12 +1,15 @@
 ` noct client `
 
-std := load('std')
+std := load('../vendor/std')
+json := load('../vendor/json')
 f := std.format
 log := std.log
+each := std.each
 readFile := std.readFile
 writeFile := std.writeFile
 
 cli := load('../lib/cli')
+queue := load('../lib/queue')
 
 fs := load('fs')
 sync := load('sync')
@@ -14,9 +17,9 @@ describe := fs.describe
 flatten := fs.flatten
 diff := sync.diff
 
-desc := (remote, path, cb) => req({
+descRemote := (remote, path, cb) => req({
 	method: 'GET'
-	url: f('https://{{ remote }}/desc/{{ path }}', {
+	url: f('http://{{ remote }}/desc/{{ path }}', {
 		remote: remote
 		path: path
 	})
@@ -26,7 +29,7 @@ desc := (remote, path, cb) => req({
 		cb(())
 	)
 	'resp' -> evt.data.status :: {
-		200 -> cb(evt.data.body)
+		200 -> cb((json.de)(evt.data.body))
 		_ -> (
 			log('Failed to desc: response code ' + string(evt.data.status))
 			cb(())
@@ -34,11 +37,11 @@ desc := (remote, path, cb) => req({
 	}
 })
 
-up := (remote, path) => readFile(path, file :: {
+up := (remote, path, cb) => readFile(path, file :: {
 	() -> log('Failed to up: file read error for ' + path)
 	_ -> req({
 		method: 'POST'
-		url: f('https://{{ remote }}/sync/{{ path }}', {
+		url: f('http://{{ remote }}/sync/{{ path }}', {
 			remote: remote
 			path: path
 		})
@@ -46,15 +49,18 @@ up := (remote, path) => readFile(path, file :: {
 	}, evt => evt.type :: {
 		'error' -> log('Failed to up: request error ' + evt.message)
 		'resp' -> evt.data.status :: {
-			201 -> log('up success: ' + path)
+			201 -> (
+				log('up success: ' + path)
+				cb()
+			)
 			_ -> log('Failed to up: response code ' + string(evt.data.status))
 		}
 	})
 })
 
-down := (remote, path) => req({
+down := (remote, path, cb) => req({
 	method: 'GET'
-	url: f('https://{{ remote }}/sync/{{ path }}', {
+	url: f('http://{{ remote }}/sync/{{ path }}', {
 		remote: remote
 		path: path
 	})
@@ -64,7 +70,10 @@ down := (remote, path) => req({
 	'resp' -> evt.data.status :: {
 		200 -> (
 			writeFile(path, evt.data.body, r => r :: {
-				true -> log('down success: ' + path)
+				true -> (
+					log('down success: ' + path)
+					cb()
+				)
 				_ -> log('Failed to down: write error ' + evt.message)
 			})
 		)
@@ -73,9 +82,61 @@ down := (remote, path) => req({
 })
 
 ` commands `
+getPath := args => args.0 :: {
+	() -> '.'
+	_ -> args.0
+}
+withDiff := opts => args => cb => (
+	descRemote(opts.remote, 'test', remoteDesc => (
+		describe(getPath(args), localDesc => (
+			cb(diff(flatten(localDesc), flatten(remoteDesc)))
+		))
+	))
+)
+desc := opts => args => (
+	opts.remote :: {
+		() -> describe(getPath(args), data => log(data))
+		_ -> descRemote(opts.remote, getPath(args), data => log(data))
+	}
+)
 plan := opts => args => (
-	` TODO: print sync plan `
+	opts.remote :: {
+		() -> log('Missing remote')
+		_ -> withDiff(opts)(args)(df => (
+			each(keys(df), path => log(f('{{ action }}: {{ path }}', {
+					path: path
+					action: df.(path) :: {
+						0 -> 'up'
+						1 -> 'down'
+					}
+			})))
+		))
+	}
 )
 sync := opts => args => (
-	` TODO: perform sync `
+	qu := (queue.new)(6) ` 6 concurrent connections `
+	queueTask := qu.add
+
+	opts.remote :: {
+		() -> log('Missing remote')
+		_ -> withDiff(opts)(args)(df => (
+			each(keys(df), path => df.(path) :: {
+				0 -> queueTask(cb => up(opts.remote, path, cb))
+				1 -> queueTask(cb => down(opts.remote, path, cb))
+			})
+		))
+	}
 )
+
+` cli main: switch on given verb `
+given := (cli.parsed)()
+given.verb :: {
+	'desc' -> desc(given.opts)(given.args)
+	'plan' -> plan(given.opts)(given.args)
+	'sync' -> sync(given.opts)(given.args)
+	_ -> (
+		log(f('Command "{{ verb }}" not recognized:', given))
+		log(given)
+	)
+}
+
