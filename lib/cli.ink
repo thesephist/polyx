@@ -34,13 +34,33 @@ parsed := () => (
 
 	s := {
 		lastOpt: ()
+		onlyArgs: false
 	}
 	each(rest, part => [maybeOpt(part), s.lastOpt] :: {
-		[false, ()] -> ()
-		[false, _] -> ()
-		[_, ()] -> ()
-		_ -> ()
+		[(), ()] -> (
+			` not opt, no prev opt `
+			args.len(args) := part
+		)
+		[(), _] -> (
+			` not opt, prev opt exists `
+			opts.(s.lastOpt) := part
+			s.lastOpt := ()
+		)
+		[_, ()] -> (
+			` is opt, no prev opt `
+			s.lastOpt := maybeOpt(part)
+		)
+		_ -> (
+			` is opt, prev opt exists `
+			opts.(s.lastOpt) := true
+			s.lastOpt := maybeOpt(part)
+		)
 	})
+
+	s.lastOpt :: {
+		() -> ()
+		_ -> opts.(s.lastOpt) := true
+	}
 
 	{
 		verb: verb
@@ -48,5 +68,3 @@ parsed := () => (
 		args: args
 	}
 )
-
-(std.log)(parsed())
