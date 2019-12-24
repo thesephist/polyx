@@ -37,11 +37,11 @@ descRemote := (remote, path, cb) => req({
 	}
 })
 
-up := (remote, path, cb) => readFile(path, file :: {
+up := (remote, path, cb) => readFile(path, file => file :: {
 	() -> log('Failed to up: file read error for ' + path)
 	_ -> req({
 		method: 'POST'
-		url: f('http://{{ remote }}/sync/{{ path }}', {
+		url: f('http://{{ remote }}/sync{{ path }}', {
 			remote: remote
 			path: path
 		})
@@ -60,7 +60,7 @@ up := (remote, path, cb) => readFile(path, file :: {
 
 down := (remote, path, cb) => req({
 	method: 'GET'
-	url: f('http://{{ remote }}/sync/{{ path }}', {
+	url: f('http://{{ remote }}/sync{{ path }}', {
 		remote: remote
 		path: path
 	})
@@ -87,7 +87,7 @@ getPath := args => args.0 :: {
 	_ -> args.0
 }
 withDiff := opts => args => cb => (
-	descRemote(opts.remote, 'test', remoteDesc => (
+	descRemote(opts.remote, getPath(args), remoteDesc => (
 		describe(getPath(args), localDesc => (
 			cb(diff(flatten(localDesc), flatten(remoteDesc)))
 		))

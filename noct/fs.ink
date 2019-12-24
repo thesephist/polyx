@@ -10,24 +10,42 @@ range := std.range
 slice := std.slice
 sliceList := std.sliceList
 split := str.split
+replace := str.replace
 
 queue := load('../lib/queue')
 
+` prevent climbing out of root directory of noct service `
+cleanPath := path => (
+	path := replace(path, '/..', '')
+	path := replace(path, '/.', '')
+	path := (path.0 :: {
+		'/' -> slice(path, 1, len(path))
+		_ -> path
+	})
+	path.(len(path) - 1) :: {
+		'/' -> slice(path, 0, len(path) - 1)
+		_ -> path
+	}
+)
+
 ` return a recursive description of a file/directory `
 describe := (path, cb) => (
+	` all filesystem actions start at describe, so if we
+		cleanPath here, it covers all cases `
+	path := cleanPath(path)
 	qu := (queue.new)(12) ` 12 concurrent child processes `
 	describeWithQueue(path, qu, cb)
 )
 
 describeWithQueue := (path, qu, cb) => stat(path, evt => [evt.type, evt.data] :: {
-	['error', _] -> cb(())
-	['data', ()] -> cb(())
+	['error', _] -> cb({})
+	['data', ()] -> cb({})
 	['data', _] -> evt.data.dir :: {
 		false -> (qu.add)(qcb => exec('shasum', [path], '', e => (
-			e .type :: {
+			e.type :: {
 				'error' -> (
 					log(e.message)
-					cb(())
+					cb({})
 				)
 				_ -> cb({
 					name: evt.data.name
@@ -41,7 +59,7 @@ describeWithQueue := (path, qu, cb) => stat(path, evt => [evt.type, evt.data] ::
 		true -> dir(path, devt => (
 			items := []
 			devt.type :: {
-				'error' -> cb(())
+				'error' -> cb({})
 				'data' -> len(devt.data) :: {
 					0 -> cb({
 						name: evt.data.name
@@ -64,19 +82,22 @@ describeWithQueue := (path, qu, cb) => stat(path, evt => [evt.type, evt.data] ::
 
 ` flatten the nested directory description
 	into a single flat list of paths `
-flatten := desc => (
-	items := {}
-	` to generate a sync plan, all paths should be absolute relative to 
-		the root dir of describe() `
-	trimPath := path => slice(path, len(desc.name) + 1, len(path))
-	add := (path, mod, hash, size) => items.trimPath(path) := {
-		mod: mod
-		hash: hash
-		size: size
-	}
-	flattenRec(desc, '', add)
-	items
-)
+flatten := desc => desc :: {
+	{} -> {}
+	_ -> (
+		items := {}
+		` to generate a sync plan, all paths should be absolute relative to 
+			the root dir of describe() `
+		trimPath := path => slice(path, len(desc.name) + 1, len(path))
+		add := (path, mod, hash, size) => items.trimPath(path) := {
+			mod: mod
+			hash: hash
+			size: size
+		}
+		flattenRec(desc, '', add)
+		items
+	)
+}
 
 flattenRec := (desc, pathPrefix, add) => (
 	desc.items :: {
@@ -89,7 +110,6 @@ ensureParentDirExists := (path, cb) => (
 	` path is of the form a/b/c.ext `
 	parts := split(path, '/')
 	parentDir := cat(sliceList(parts, 0, len(parts) - 1))
-	(std.log)(parentDir)
 	make(parentDir, evt => evt.type :: {
 		'error' -> cb(())
 		_ -> cb(true)

@@ -1,3 +1,5 @@
+` noct server `
+
 std := load('../vendor/std')
 json := load('../vendor/json')
 log := std.log
@@ -5,34 +7,43 @@ readFile := std.readFile
 writeFile := std.writeFile
 
 http := load('../lib/http')
+cli := load('../lib/cli')
 
 fs := load('fs')
 sync := load('sync')
+cleanPath := fs.cleanPath
 describe := fs.describe
 flatten := fs.flatten
 ensurePDE := fs.ensureParentDirExists
 
 PORT := 7280
 
+given := (cli.parsed)()
+givenPath := (given.args.0 :: {
+	() -> '.'
+	_ -> given.args.0
+})
+ROOTFS := cleanPath(givenPath)
+
 server := (http.new)()
 
 addRoute := server.addRoute
 addRoute('/desc/*descPath', params => (_, end) => (
-	descPath := params.descPath
+	descPath := ROOTFS + '/' + cleanPath(params.descPath)
 	describe(descPath, desc => end({
 		status: 200
 		body: (json.ser)(desc)
 	}))
 ))
 addRoute('/desc/', _ => (_, end) => (
-	describe('.', desc => end({
+	describe(ROOTFS, desc => end({
 		status: 200
 		body: (json.ser)(desc)
 	}))
 ))
 addRoute('/sync/*downPath', params => (req, end) => req.method :: {
 	'GET' -> (
-		downPath := params.downPath
+		downPath := ROOTFS + '/' + cleanPath(params.downPath)
 		readFile(downPath, file => file :: {
 			() -> end({
 				status: 404
@@ -48,7 +59,7 @@ addRoute('/sync/*downPath', params => (req, end) => req.method :: {
 		})
 	)
 	'POST' -> (
-		downPath := params.downPath
+		downPath := ROOTFS + '/' + cleanPath(params.downPath)
 		ensurePDE(downPath, r => r :: {
 			true -> writeFile(downPath, req.body, r => r :: {
 				true -> end({
