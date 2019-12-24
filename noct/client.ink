@@ -1,3 +1,5 @@
+#!/usr/bin/env ink
+
 ` noct client `
 
 std := load('../vendor/std')
@@ -13,6 +15,7 @@ queue := load('../lib/queue')
 
 fs := load('fs')
 sync := load('sync')
+server := load('entry')
 cleanPath := fs.cleanPath
 describe := fs.describe
 flatten := fs.flatten
@@ -146,6 +149,7 @@ given.verb :: {
 	'desc' -> desc(given.opts)(given.args)
 	'plan' -> plan(given.opts)(given.args)
 	'sync' -> sync(given.opts)(given.args)
+	'serve' -> (server.start)()
 	_ -> (
 		log(f('Command "{{ verb }}" not recognized:', given))
 		log(given)

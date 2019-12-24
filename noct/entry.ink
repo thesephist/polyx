@@ -83,4 +83,4 @@ addRoute('/sync/*downPath', params => (req, end) => req.method :: {
 	})
 })
 
-(server.start)(PORT)
+start := () => (server.start)(PORT)
