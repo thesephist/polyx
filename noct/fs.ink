@@ -16,8 +16,8 @@ queue := load('../lib/queue')
 
 ` prevent climbing out of root directory of noct service `
 cleanPath := path => (
-	path := replace(path, '/..', '')
-	path := replace(path, '/.', '')
+	path := replace(path, '/../', '/')
+	path := replace(path, '/./', '/')
 	path := (path.0 :: {
 		'/' -> slice(path, 1, len(path))
 		_ -> path

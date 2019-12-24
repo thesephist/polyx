@@ -13,6 +13,7 @@ queue := load('../lib/queue')
 
 fs := load('fs')
 sync := load('sync')
+cleanPath := fs.cleanPath
 describe := fs.describe
 flatten := fs.flatten
 diff := sync.diff
@@ -41,7 +42,7 @@ up := (remote, path, cb) => readFile(path, file => file :: {
 	() -> log('Failed to up: file read error for ' + path)
 	_ -> req({
 		method: 'POST'
-		url: f('http://{{ remote }}/sync{{ path }}', {
+		url: f('http://{{ remote }}/sync/{{ path }}', {
 			remote: remote
 			path: path
 		})
@@ -60,7 +61,7 @@ up := (remote, path, cb) => readFile(path, file => file :: {
 
 down := (remote, path, cb) => req({
 	method: 'GET'
-	url: f('http://{{ remote }}/sync{{ path }}', {
+	url: f('http://{{ remote }}/sync/{{ path }}', {
 		remote: remote
 		path: path
 	})
@@ -114,16 +115,21 @@ plan := opts => args => (
 	}
 )
 sync := opts => args => (
-	qu := (queue.new)(6) ` 6 concurrent connections `
+    maxConcurrency := 6
+    log(f('Syncing with {{ n }} workers', {n: maxConcurrency}))
+	qu := (queue.new)(maxConcurrency) ` 6 concurrent connections `
 	queueTask := qu.add
 
 	opts.remote :: {
 		() -> log('Missing remote')
 		_ -> withDiff(opts)(args)(df => (
-			each(keys(df), path => df.(path) :: {
-				0 -> queueTask(cb => up(opts.remote, path, cb))
-				1 -> queueTask(cb => down(opts.remote, path, cb))
-			})
+            each(keys(df), path => (
+                fullPath := cleanPath(path) ` path starts with a / here `
+                df.(path) :: {
+                    0 -> queueTask(cb => up(opts.remote, fullPath, cb))
+                    1 -> queueTask(cb => down(opts.remote, fullPath, cb))
+                })
+            )
 		))
 	}
 )
