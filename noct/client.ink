@@ -104,12 +104,14 @@ withDiff := opts => args => cb => (
 	))
 )
 desc := opts => args => (
+	opts.remote := cleanPath(opts.remote)
 	opts.remote :: {
 		() -> describe(getPath(args), getPath(args) + '/ignore.txt', data => log(data))
 		_ -> descRemote(opts.remote, getPath(args), data => log(data))
 	}
 )
 plan := opts => args => (
+	opts.remote := cleanPath(opts.remote)
 	opts.remote :: {
 		() -> log('Missing remote')
 		_ -> withDiff(opts)(args)(df => (
@@ -129,6 +131,7 @@ sync := opts => args => (
 	qu := (queue.new)(maxConcurrency) ` 6 concurrent connections `
 	queueTask := qu.add
 
+	opts.remote := cleanPath(opts.remote)
 	opts.remote :: {
 		() -> log('Missing remote')
 		_ -> withDiff(opts)(args)(df => (
