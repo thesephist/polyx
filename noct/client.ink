@@ -97,21 +97,23 @@ getPath := args => args.0 :: {
 	_ -> args.0
 }
 withDiff := opts => args => cb => (
-	descRemote(opts.remote, getPath(args), remoteDesc => (
+	remote := cleanPath(opts.remote)
+	descRemote(remote, getPath(args), remoteDesc => (
 		describe(getPath(args), getPath(args) + '/ignore.txt', localDesc => (
 			cb(diff(flatten(localDesc), flatten(remoteDesc)))
 		))
 	))
 )
 desc := opts => args => (
-	opts.remote := cleanPath(opts.remote)
 	opts.remote :: {
 		() -> describe(getPath(args), getPath(args) + '/ignore.txt', data => log(data))
-		_ -> descRemote(opts.remote, getPath(args), data => log(data))
+		_ -> (
+			remote := cleanPath(opts.remote)
+			descRemote(remote, getPath(args), data => log(data))
+		)
 	}
 )
 plan := opts => args => (
-	opts.remote := cleanPath(opts.remote)
 	opts.remote :: {
 		() -> log('Missing remote')
 		_ -> withDiff(opts)(args)(df => (
