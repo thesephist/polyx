@@ -26,11 +26,7 @@ new := () => (
 		evt.type :: {
 			'error' -> log('server start error: ' + evt.message)
 			'req' -> (
-				log(f('{{ method }}: {{ url }} "{{ body }}"', {
-					method: evt.data.method
-					url: evt.data.url
-					body: slice(evt.data.body, 0, 100)
-				}))
+				log(f('{{ method }}: {{ url }}', evt.data))
 				url := trimQP(evt.data.url)
 
 				handleWithHeaders := evt => (
