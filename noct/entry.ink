@@ -8,6 +8,8 @@ writeFile := std.writeFile
 
 http := load('../lib/http')
 cli := load('../lib/cli')
+percent := load('../lib/pecent')
+pctDecode := percent.decode
 
 fs := load('fs')
 sync := load('sync')
@@ -29,7 +31,7 @@ server := (http.new)()
 
 addRoute := server.addRoute
 addRoute('/desc/*descPath', params => (_, end) => (
-	descPath := ROOTFS + '/' + cleanPath(params.descPath)
+	descPath := ROOTFS + '/' + cleanPath(pctDecode(params.descPath))
 	describe(descPath, ROOTFS + '/ignore.txt', desc => end({
 		status: 200
 		body: (json.ser)(desc)
@@ -43,7 +45,7 @@ addRoute('/desc/', _ => (_, end) => (
 ))
 addRoute('/sync/*downPath', params => (req, end) => req.method :: {
 	'GET' -> (
-		downPath := ROOTFS + '/' + cleanPath(params.downPath)
+		downPath := ROOTFS + '/' + cleanPath(pctDecode(params.downPath))
 		readFile(downPath, file => file :: {
 			() -> end({
 				status: 404
@@ -59,7 +61,7 @@ addRoute('/sync/*downPath', params => (req, end) => req.method :: {
 		})
 	)
 	'POST' -> (
-		downPath := ROOTFS + '/' + cleanPath(params.downPath)
+		downPath := ROOTFS + '/' + cleanPath(pctDecode(params.downPath))
 		ensurePDE(downPath, r => r :: {
 			true -> writeFile(downPath, req.body, r => r :: {
 				true -> end({

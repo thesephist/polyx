@@ -12,6 +12,8 @@ writeFile := std.writeFile
 
 cli := load('../lib/cli')
 queue := load('../lib/queue')
+percent := load('../lib/percent')
+pctEncode := percent.encodeKeepSlash
 
 fs := load('fs')
 sync := load('sync')
@@ -26,7 +28,7 @@ descRemote := (remote, path, cb) => req({
 	method: 'GET'
 	url: f('{{ remote }}/desc/{{ path }}', {
 		remote: remote
-		path: path
+		path: pctEncode(path)
 	})
 }, evt => evt.type :: {
 	'error' -> (
@@ -48,7 +50,7 @@ up := (remote, path, cb) => readFile(path, file => file :: {
 		method: 'POST'
 		url: f('{{ remote }}/sync/{{ path }}', {
 			remote: remote
-			path: path
+			path: pctEncode(path)
 		})
 		body: file
 	}, evt => evt.type :: {
@@ -67,7 +69,7 @@ down := (remote, path, cb) => req({
 	method: 'GET'
 	url: f('{{ remote }}/sync/{{ path }}', {
 		remote: remote
-		path: path
+		path: pctEncode(path)
 	})
 	body: ''
 }, evt => evt.type :: {
