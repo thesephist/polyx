@@ -71,3 +71,19 @@ The `conf/` directory contains a collection of configuration files and scripts I
 - `sshd_config`: SSH server configurations
 - `nginx.conf`: Nginx reverse proxy configurations
 
+## Provision
+
+To provision a Fortress server:
+
+1. Start up a clean Linux install with `systemd`. Fortress uses systemd as the init system to run as a daemon.
+2. Add a new non-root user with `useradd <user>`
+3. Make sure SSH, Nginx, and Ink are installed, and copy over any configuration files from `conf/`.
+4. Create a target Noct sync directory with `mkdir ~/noctd` (`~/noctd` is the conventional noct sync directory name, but you can choose something else.)
+5. Clone the Polyx source repository into `~/noctd/src`. You can do this by cloning first, then mv-ing the directory. `git clone https://github.com/thesephist/polyx; mv ~/noctd/polyx ~/noctd/src`
+6. Install the Fortress systemd service file with `cp ~/noctd/src/fortress/fortress.service /etc/systemd/system/fortress.service`
+7. Start up Fortress as a systemd daemon with `sudo systemctl start fortress`
+
+Other random tidbits:
+
+- Make a user a sudoer from root with `usermod -aG sudo <user>`
+- Remove the default login banner with `sudo chmod -x /etc/update-motd.d/*`
