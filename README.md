@@ -58,6 +58,14 @@ Nought is a personal people-manager, what some people might call a contact list 
 
 Ria is a read-it-later service for articles on the web.
 
+Ria stores all of its data in a single text file that functions as a plain text list of all saved links. Each line in the file is formatted:
+
+```
+{{ timestamp }} {{ link }} {{ description which may include #tags #like #this }}
+```
+
+At the moment, Ria will allow exact substring searches on the description. Other indexing schemes + search methods may reveal themselves later, and we may add them as I start needing them.
+
 ### Fortress
 
 Fortress is a process manager / supervisor that manages deployment and monitoring of all Polyx services.
@@ -71,7 +79,7 @@ The `conf/` directory contains a collection of configuration files and scripts I
 - `sshd_config`: SSH server configurations
 - `nginx.conf`: Nginx reverse proxy configurations
 
-## Provision
+### Provision
 
 To provision a Fortress server:
 
@@ -82,8 +90,40 @@ To provision a Fortress server:
 5. Clone the Polyx source repository into `~/noctd/src`. You can do this by cloning first, then mv-ing the directory. `git clone https://github.com/thesephist/polyx; mv ~/noctd/polyx ~/noctd/src`
 6. Install the Fortress systemd service file with `cp ~/noctd/src/fortress/fortress.service /etc/systemd/system/fortress.service`
 7. Start up Fortress as a systemd daemon with `sudo systemctl start fortress`
+8. Install and setup `certbot` to get and auto-renew HTTPS certs for all set-up domains.
 
-Other random tidbits:
+### Extras
 
 - Make a user a sudoer from root with `usermod -aG sudo <user>`
 - Remove the default login banner with `sudo chmod -x /etc/update-motd.d/*`
+- Install Go to bootstrap Ink. First, download Google's official tarball, then un-tar it to `/usr/local`. For example, for Go 1.13.5. We need to also ensure that Go's binary is in `$PATH`:
+```sh
+wget https://dl.google.com/go/go1.13.5.linux-amd64.tar.gz
+tar -C /usr/local -xzf go1.13.5.linux-amd64.tar.gz
+echo 'PATH=$PATH:/usr/local/go/bin' >> ~/.profile # or equivalent for your shell
+```
+- If running Ubuntu, setting up a firewall is straightforward with `ufw`:
+```sh
+# default-safe configuration
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# allow services
+sudo ufw allow ssh
+sudo ufw allow http
+sudo ufw allow https
+# allow other ports with
+# sudo ufw allow <port>
+
+# enable it and check status
+sudo ufw enable
+sudo ufw status
+```
+- On Fedora / CentOS, firewall management is done with `firewall-cmd`
+```sh
+sudo firewall-cmd --add-service=ssh --permanent
+sudo firewall-cmd --add-service=http --permanent
+sudo firewall-cmd --add-service=https --permanent
+sudo systemctl start firewalld
+sudo chkconfig firewalld on
+```
