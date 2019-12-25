@@ -65,3 +65,9 @@ Fortress is a process manager / supervisor that manages deployment and monitorin
 ## Deploy
 
 Polyx applications are deployed with Fortress.
+
+The `conf/` directory contains a collection of configuration files and scripts I use to provision and deploy a server that runs the Fortress instance.
+
+- `sshd_config`: SSH server configurations
+- `nginx.conf`: Nginx reverse proxy configurations
+
