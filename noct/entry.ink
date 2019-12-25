@@ -8,7 +8,7 @@ writeFile := std.writeFile
 
 http := load('../lib/http')
 cli := load('../lib/cli')
-percent := load('../lib/pecent')
+percent := load('../lib/percent')
 pctDecode := percent.decode
 
 fs := load('fs')
