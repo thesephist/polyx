@@ -40,7 +40,7 @@ and to execute the plan, run
 noct sync --remote <remote addr> <sync subdir>
 ```
 
-Currently, syncing anything other than CWD as a client is not supported, but this will probably change in the future. Noct also does not sync permission bits and other filesystem-specific file metadata.
+The remote is optional, and when not given, will default to `https://noct.thesephist.com`. Currently, syncing anything other than CWD as a client is not supported, but this will probably change in the future. Noct also does not sync permission bits and other filesystem-specific file metadata.
 
 ### Ligature
 

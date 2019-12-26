@@ -24,6 +24,15 @@ flatten := fs.flatten
 ensurePDE := fs.ensureParentDirExists
 diff := sync.diff
 
+DefaultRemote := 'https://noct.thesephist.com'
+getRemote := opts => opts.remote :: {
+	() -> (
+		log('No remote given, using default ' + DefaultRemote)
+		DefaultRemote
+	)
+	_ -> cleanPath(opts.remote)
+}
+
 descRemote := (remote, path, cb) => req({
 	method: 'GET'
 	url: f('{{ remote }}/desc/{{ path }}', {
@@ -99,14 +108,15 @@ getPath := args => args.0 :: {
 	_ -> args.0
 }
 withDiff := opts => args => cb => (
-	remote := cleanPath(opts.remote)
-	descRemote(remote, getPath(args), remoteDesc => (
+	descRemote(getRemote(opts), getPath(args), remoteDesc => (
 		describe(getPath(args), getPath(args) + '/ignore.txt', localDesc => (
 			cb(diff(flatten(localDesc), flatten(remoteDesc)))
 		))
 	))
 )
 desc := opts => args => (
+	` here, we don't use a default remote since we can desc local `
+	opts.remote := cleanPath(opts.remote)
 	opts.remote :: {
 		() -> describe(getPath(args), getPath(args) + '/ignore.txt', data => log(data))
 		_ -> (
@@ -116,18 +126,15 @@ desc := opts => args => (
 	}
 )
 plan := opts => args => (
-	opts.remote :: {
-		() -> log('Missing remote')
-		_ -> withDiff(opts)(args)(df => (
-			each(keys(df), path => log(f('{{ action }}: {{ path }}', {
-					path: path
-					action: df.(path) :: {
-						0 -> 'up'
-						1 -> 'down'
-					}
-			})))
-		))
-	}
+	withDiff(opts)(args)(df => (
+		each(keys(df), path => log(f('{{ action }}: {{ path }}', {
+			path: path
+			action: df.(path) :: {
+				0 -> 'up'
+				1 -> 'down'
+			}
+		})))
+	))
 )
 sync := opts => args => (
 	maxConcurrency := 6
@@ -135,19 +142,15 @@ sync := opts => args => (
 	qu := (queue.new)(maxConcurrency) ` 6 concurrent connections `
 	queueTask := qu.add
 
-	opts.remote := cleanPath(opts.remote)
-	opts.remote :: {
-		() -> log('Missing remote')
-		_ -> withDiff(opts)(args)(df => (
-			each(keys(df), path => (
-				fullPath := cleanPath(path) ` path starts with a / here `
-				df.(path) :: {
-					0 -> queueTask(cb => up(opts.remote, fullPath, cb))
-					1 -> queueTask(cb => down(opts.remote, fullPath, cb))
-				})
-			)
-		))
-	}
+	withDiff(opts)(args)(df => (
+		each(keys(df), path => (
+			fullPath := cleanPath(path) ` path starts with a / here `
+			df.(path) :: {
+				0 -> queueTask(cb => up(getRemote(opts), fullPath, cb))
+				1 -> queueTask(cb => down(getRemote(opts), fullPath, cb))
+			})
+		)
+	))
 )
 
 ` cli main: switch on given verb `
