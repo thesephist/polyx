@@ -85,4 +85,7 @@ addRoute('/sync/*downPath', params => (req, end) => req.method :: {
 	})
 })
 
-start := () => (server.start)(PORT)
+start := () => (
+	close := (server.start)(PORT)
+	log('Noct server started')
+)
