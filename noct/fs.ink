@@ -66,7 +66,10 @@ describeWithQueue := (path, qu, cb, include?) => stat(path, evt => [evt.type, ev
 					name: evt.data.name
 					len: evt.data.len
 					mod: evt.data.mod
-					hash: split(e.data, ' ').0
+					` shasum outputs "{{ hash }} {{ path }}".
+						we only take the first 8 characters of the SHA1,
+						which should be collision-free enough `
+					hash: slice(e.data, 0, 8)
 				})
 			}
 			qcb()

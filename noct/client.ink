@@ -116,7 +116,6 @@ withDiff := opts => args => cb => (
 )
 desc := opts => args => (
 	` here, we don't use a default remote since we can desc local `
-	opts.remote := cleanPath(opts.remote)
 	opts.remote :: {
 		() -> describe(getPath(args), getPath(args) + '/ignore.txt', data => log(data))
 		_ -> (
