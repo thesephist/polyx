@@ -24,10 +24,17 @@ flatten := fs.flatten
 ensurePDE := fs.ensureParentDirExists
 diff := sync.diff
 
+` so we only log the default override msg once `
+defaultRemoteLogged := [false]
 DefaultRemote := 'https://noct.thesephist.com'
 getRemote := opts => opts.remote :: {
 	() -> (
-		log('No remote given, using default ' + DefaultRemote)
+		defaultRemoteLogged.0 :: {
+			false -> (
+				log('No remote given, using default ' + DefaultRemote)
+				defaultRemoteLogged.0 := true
+			)
+		}
 		DefaultRemote
 	)
 	_ -> cleanPath(opts.remote)
