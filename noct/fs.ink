@@ -2,6 +2,7 @@
 
 std := load('../vendor/std')
 str := load('../vendor/str')
+json := load('../vendor/json')
 
 log := std.log
 cat := std.cat
@@ -13,6 +14,7 @@ sliceList := std.sliceList
 split := str.split
 replace := str.replace
 readFile := std.readFile
+writeFile := std.writeFile
 
 queue := load('../lib/queue')
 
@@ -30,15 +32,10 @@ cleanPath := path => (
 	}
 )
 
-` return a recursive description of a file/directory `
-describe := (path, ignoreFilePath, cb) => (
-	` all filesystem actions start at describe, so if we
-		cleanPath here, it covers all cases `
-	path := cleanPath(path)
-	qu := (queue.new)(12) ` 12 concurrent child processes `
-
-	readFile(ignoreFilePath, file => file :: {
-		() -> describeWithQueue(path, qu, cb, () => true)
+IgnoreFilePath := '/ignore.txt'
+withIncludePredicate := (rootPath, cb) => (
+	readFile(rootPath + IgnoreFilePath, file => file :: {
+		() -> cb(() => true)
 		_ -> (
 			ignoreFiles := {}
 
@@ -47,38 +44,108 @@ describe := (path, ignoreFilePath, cb) => (
 			names := filter(lines, s => ~(s = ''))
 			each(names, s => ignoreFiles.(s) := true)
 
-			describeWithQueue(path, qu, cb, s => ignoreFiles.(s) = ())
+			cb(s => ignoreFiles.(s) = ())
 		)
 	})
 )
 
-describeWithQueue := (path, qu, cb, include?) => stat(path, evt => [evt.type, evt.data] :: {
+` hash cache is a performance optimization to cache checksums
+	keyed by the string 'mod + path' for every encountered path on each run.
+
+	hash cache relies on the fact that for a file to change its hash, it must
+	also necessarily have a different modified timestamp. This is true in all
+	practical cases, excluding some serious filesystem black magic. `
+HashFilePath := '/.noctCache.json'
+withPathHash := (path, cb) => exec('shasum', [path], '', e => e.type :: {
+	'error' -> (
+		log(e.message)
+		cb('')
+	)
+	` shasum outputs "{{ hash }} {{ path }}".
+		we only take the first 8 characters of the SHA1,
+		which should be collision-free enough `
+	_ -> cb(slice(e.data, 0, 8))
+})
+withGetHash := (rootPath, cb) => (
+	cache := {}
+	` cached? callback if there is no cache `
+	noCacheCallback := (path, mod, hcb) => withPathHash(path, hash => (
+		cache.(string(mod) + path) := hash
+		hcb(hash)
+	))
+
+	readFile(rootPath + HashFilePath, file => file :: {
+		() -> (
+			log('Hash cache not found, hashing from scratch')
+			cb(noCacheCallback)
+		)
+		_ -> (
+			prevCache := (json.de)(file)
+			prevCache :: {
+				() -> (
+					log('Could not decode hash cache, hashing from scratch')
+					cb(noCacheCallback)
+				)
+				_ -> cb((path, mod, hcb) => (
+					key := string(mod) + path
+					prevCache.(key) :: {
+						() -> withPathHash(path, hash => (
+							cache.(key) := hash
+							hcb(hash)
+						))
+						_ -> (
+							cache.(key) := prevCache.(key)
+							hcb(prevCache.(key))
+						)
+					}
+				))
+			}
+		)
+	})
+
+	() => writeFile(rootPath + HashFilePath, (json.ser)(cache), r => r :: {
+		true -> log('Cache flushed to disk: ' + rootPath + HashFilePath)
+		_ -> log('Cache write failed! Cache may be outdated or corrupt')
+	})
+)
+
+` return a recursive description of a file/directory `
+describe := (path, rootPath, cb) => (
+	` all filesystem actions start at describe, so if we
+		cleanPath here, it covers all cases `
+	rootPath := cleanPath(rootPath)
+	qu := (queue.new)(12) ` 12 concurrent child processes `
+
+	withIncludePredicate(rootPath, include? => (
+		flush := withGetHash(rootPath, getHash => (
+			describeWithQueue(path, qu, include?, getHash, data => (
+				flush()
+				cb(data)
+			))
+		))
+	))
+)
+
+describeWithQueue := (path, qu, include?, getHash, cb) => stat(path, evt => [evt.type, evt.data] :: {
 	['error', _] -> cb({})
 	['data', ()] -> cb({})
 	['data', _] -> evt.data.dir :: {
-		false -> (qu.add)(qcb => exec('shasum', [path], '', e => (
-			e.type :: {
-				'error' -> (
-					log(e.message)
-					cb({})
-				)
-				_ -> cb({
-					name: evt.data.name
-					len: evt.data.len
-					mod: evt.data.mod
-					` shasum outputs "{{ hash }} {{ path }}".
-						we only take the first 8 characters of the SHA1,
-						which should be collision-free enough `
-					hash: slice(e.data, 0, 8)
-				})
-			}
+		false -> (qu.add)(qcb => getHash(path, evt.data.mod, hash => (
+			` TODO: move the task queue to only run for exec tasks, not
+				all requests to getHash `
+			cb({
+				name: evt.data.name
+				len: evt.data.len
+				mod: evt.data.mod
+				hash: hash
+			})
 			qcb()
 		)))
-		true -> dir(path, devt => (
+		true -> dir(path, dirEvt => (
 			items := []
-			devt.type :: {
+			dirEvt.type :: {
 				'error' -> cb({})
-				'data' -> len(devt.data) :: {
+				'data' -> len(dirEvt.data) :: {
 					0 -> cb({
 						name: evt.data.name
 						items: items
@@ -88,17 +155,23 @@ describeWithQueue := (path, qu, cb, include?) => stat(path, evt => [evt.type, ev
 						cbIfDone := () => (
 							s.found := s.found + 1
 							s.found :: {
-								len(devt.data) -> cb({
+								len(dirEvt.data) -> cb({
 									name: evt.data.name
 									items: items
 								})
 							}
 						)
-						each(devt.data, f => include?(f.name) :: {
-							true -> describeWithQueue(path + '/' + f.name, qu, desc => (
-								items.len(items) := desc
-								cbIfDone()
-							), include?)
+						each(dirEvt.data, f => include?(f.name) :: {
+							true -> describeWithQueue(
+								path + '/' + f.name
+								qu
+								include?
+								getHash
+								desc => (
+									items.len(items) := desc
+									cbIfDone()
+								)
+							)
 							_ -> cbIfDone()
 						})
 					)

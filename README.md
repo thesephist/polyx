@@ -28,19 +28,21 @@ Noct is designed as a client-server system, with a shared isomorphic library of 
 To start a server, usually a remote or headless machine, run
 
 ```sh
-noct serve <target dir>
+noct serve <sync root dir>
 ```
 
 With the client CLI, to query for a sync plan, run
 ```sh
-noct plan --remote <remote addr> <sync subdir>
+noct plan --remote <remote addr> <sync root dir>
 ```
 and to execute the plan, run
 ```sh
-noct sync --remote <remote addr> <sync subdir>
+noct sync --remote <remote addr> <sync root dir>
 ```
 
-The remote is optional, and when not given, will default to `https://noct.thesephist.com`. Currently, syncing anything other than CWD as a client is not supported, but this will probably change in the future. Noct also does not sync permission bits and other filesystem-specific file metadata.
+- The remote is optional, and when not given, will default to `https://noct.thesephist.com`.
+- Noct does not sync permission bits and other filesystem-specific file metadata.
+- Currently, there is no way to sync a sub-directory of the target root directory, because my workflow never needs it. If this changes in the future, we may introduce a `--part` flag to sync a sub-path in a partial sync.
 
 ### Ligature
 

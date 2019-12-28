@@ -40,11 +40,10 @@ getRemote := opts => opts.remote :: {
 	_ -> cleanPath(opts.remote)
 }
 
-descRemote := (remote, path, cb) => req({
+descRemote := (remote, cb) => req({
 	method: 'GET'
-	url: f('{{ remote }}/desc/{{ path }}', {
+	url: f('{{ remote }}/desc/', {
 		remote: remote
-		path: pctEncode(path)
 	})
 }, evt => evt.type :: {
 	'error' -> (
@@ -110,13 +109,13 @@ down := (remote, path, cb) => req({
 })
 
 ` commands `
-getPath := args => args.0 :: {
+getRootPath := args => args.0 :: {
 	() -> '.'
 	_ -> args.0
 }
 withDiff := opts => args => cb => (
-	descRemote(getRemote(opts), getPath(args), remoteDesc => (
-		describe(getPath(args), getPath(args) + '/ignore.txt', localDesc => (
+	descRemote(getRemote(opts), remoteDesc => (
+		describe(getRootPath(args), getRootPath(args), localDesc => (
 			cb(diff(flatten(localDesc), flatten(remoteDesc)))
 		))
 	))
@@ -124,10 +123,10 @@ withDiff := opts => args => cb => (
 desc := opts => args => (
 	` here, we don't use a default remote since we can desc local `
 	opts.remote :: {
-		() -> describe(getPath(args), getPath(args) + '/ignore.txt', data => log(data))
+		() -> describe(getRootPath(args), getRootPath(args), data => log(data))
 		_ -> (
 			remote := cleanPath(opts.remote)
-			descRemote(remote, getPath(args), data => log(data))
+			descRemote(remote, data => log(data))
 		)
 	}
 )
@@ -167,7 +166,8 @@ given.verb :: {
 	'sync' -> sync(given.opts)(given.args)
 	'serve' -> (server.start)()
 	_ -> (
-		log(f('Command "{{ verb }}" not recognized:', given))
+		log(f('Command "{{ verb }}" not recognized', given))
+		log('Noct supports desc, plan, sync, serve')
 		log(given)
 	)
 }

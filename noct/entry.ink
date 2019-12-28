@@ -18,34 +18,34 @@ describe := fs.describe
 flatten := fs.flatten
 ensurePDE := fs.ensureParentDirExists
 
-PORT := 7280
+Port := 7280
 
 given := (cli.parsed)()
 givenPath := (given.args.0 :: {
 	() -> '.'
 	_ -> given.args.0
 })
-ROOTFS := cleanPath(givenPath)
+RootFS := cleanPath(givenPath)
 
 server := (http.new)()
 
 addRoute := server.addRoute
 addRoute('/desc/*descPath', params => (_, end) => (
-	descPath := ROOTFS + '/' + cleanPath(pctDecode(params.descPath))
-	describe(descPath, ROOTFS + '/ignore.txt', desc => end({
+	descPath := RootFS + '/' + cleanPath(pctDecode(params.descPath))
+	describe(descPath, RootFS, desc => end({
 		status: 200
 		body: (json.ser)(desc)
 	}))
 ))
 addRoute('/desc/', _ => (_, end) => (
-	describe(ROOTFS, ROOTFS + '/ignore.txt', desc => end({
+	describe(RootFS, RootFS, desc => end({
 		status: 200
 		body: (json.ser)(desc)
 	}))
 ))
 addRoute('/sync/*downPath', params => (req, end) => req.method :: {
 	'GET' -> (
-		downPath := ROOTFS + '/' + cleanPath(pctDecode(params.downPath))
+		downPath := RootFS + '/' + cleanPath(pctDecode(params.downPath))
 		readFile(downPath, file => file :: {
 			() -> end({
 				status: 404
@@ -61,7 +61,7 @@ addRoute('/sync/*downPath', params => (req, end) => req.method :: {
 		})
 	)
 	'POST' -> (
-		downPath := ROOTFS + '/' + cleanPath(pctDecode(params.downPath))
+		downPath := RootFS + '/' + cleanPath(pctDecode(params.downPath))
 		ensurePDE(downPath, r => r :: {
 			true -> writeFile(downPath, req.body, r => r :: {
 				true -> end({
@@ -86,6 +86,6 @@ addRoute('/sync/*downPath', params => (req, end) => req.method :: {
 })
 
 start := () => (
-	close := (server.start)(PORT)
+	close := (server.start)(Port)
 	log('Noct server started')
 )
