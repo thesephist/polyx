@@ -56,17 +56,23 @@ withIncludePredicate := (rootPath, cb) => (
 	also necessarily have a different modified timestamp. This is true in all
 	practical cases, excluding some serious filesystem black magic. `
 HashFilePath := '/.noctCache.json'
-withPathHash := (path, cb) => exec('shasum', [path], '', e => e.type :: {
-	'error' -> (
-		log(e.message)
-		cb('')
-	)
-	` shasum outputs "{{ hash }} {{ path }}".
-		we only take the first 8 characters of the SHA1,
-		which should be collision-free enough `
-	_ -> cb(slice(e.data, 0, 8))
-})
+withPathHashWithQueue := qu => (path, cb) => (
+	(qu.add)(done => exec('shasum', [path], '', e => e.type :: {
+		'error' -> (
+			log('Failed to hash: ' + e.message)
+			cb('')
+		)
+		` shasum outputs "{{ hash }} {{ path }}".
+			we only take the first 8 characters of the SHA1,
+			which should be collision-free enough `
+		_ -> cb(slice(e.data, 0, 8))
+	})
+))
 withGetHash := (rootPath, cb) => (
+	` withPathHash spins up child processes, which need to be queued
+		to not get killed by the system. We limit to 12 child procs `
+	withPathHash := withPathHashWithQueue((queue.new)(12))
+
 	cache := {}
 	` cached? callback if there is no cache `
 	noCacheCallback := (path, mod, hcb) => withPathHash(path, hash => (
@@ -113,12 +119,12 @@ withGetHash := (rootPath, cb) => (
 describe := (path, rootPath, cb) => (
 	` all filesystem actions start at describe, so if we
 		cleanPath here, it covers all cases `
+	path := cleanPath(path)
 	rootPath := cleanPath(rootPath)
-	qu := (queue.new)(12) ` 12 concurrent child processes `
 
 	withIncludePredicate(rootPath, include? => (
 		flush := withGetHash(rootPath, getHash => (
-			describeWithQueue(path, qu, include?, getHash, data => (
+			describeWithQueue(path, include?, getHash, data => (
 				flush()
 				cb(data)
 			))
@@ -126,21 +132,16 @@ describe := (path, rootPath, cb) => (
 	))
 )
 
-describeWithQueue := (path, qu, include?, getHash, cb) => stat(path, evt => [evt.type, evt.data] :: {
+describeWithQueue := (path, include?, getHash, cb) => stat(path, evt => [evt.type, evt.data] :: {
 	['error', _] -> cb({})
 	['data', ()] -> cb({})
 	['data', _] -> evt.data.dir :: {
-		false -> (qu.add)(qcb => getHash(path, evt.data.mod, hash => (
-			` TODO: move the task queue to only run for exec tasks, not
-				all requests to getHash `
-			cb({
-				name: evt.data.name
-				len: evt.data.len
-				mod: evt.data.mod
-				hash: hash
-			})
-			qcb()
-		)))
+		false -> getHash(path, evt.data.mod, hash => cb({
+			name: evt.data.name
+			len: evt.data.len
+			mod: evt.data.mod
+			hash: hash
+		}))
 		true -> dir(path, dirEvt => (
 			items := []
 			dirEvt.type :: {
@@ -164,7 +165,6 @@ describeWithQueue := (path, qu, include?, getHash, cb) => stat(path, evt => [evt
 						each(dirEvt.data, f => include?(f.name) :: {
 							true -> describeWithQueue(
 								path + '/' + f.name
-								qu
 								include?
 								getHash
 								desc => (
