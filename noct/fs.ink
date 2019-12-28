@@ -61,11 +61,15 @@ withPathHashWithQueue := qu => (path, cb) => (
 		'error' -> (
 			log('Failed to hash: ' + e.message)
 			cb('')
+			done()
 		)
 		` shasum outputs "{{ hash }} {{ path }}".
 			we only take the first 8 characters of the SHA1,
 			which should be collision-free enough `
-		_ -> cb(slice(e.data, 0, 8))
+		_ -> (
+			cb(slice(e.data, 0, 8))
+			done()
+		)
 	})
 ))
 withGetHash := (rootPath, cb) => (
@@ -124,7 +128,7 @@ describe := (path, rootPath, cb) => (
 
 	withIncludePredicate(rootPath, include? => (
 		flush := withGetHash(rootPath, getHash => (
-			describeWithQueue(path, include?, getHash, data => (
+			describeRec(path, include?, getHash, data => (
 				flush()
 				cb(data)
 			))
@@ -132,7 +136,7 @@ describe := (path, rootPath, cb) => (
 	))
 )
 
-describeWithQueue := (path, include?, getHash, cb) => stat(path, evt => [evt.type, evt.data] :: {
+describeRec := (path, include?, getHash, cb) => stat(path, evt => [evt.type, evt.data] :: {
 	['error', _] -> cb({})
 	['data', ()] -> cb({})
 	['data', _] -> evt.data.dir :: {
@@ -163,7 +167,7 @@ describeWithQueue := (path, include?, getHash, cb) => stat(path, evt => [evt.typ
 							}
 						)
 						each(dirEvt.data, f => include?(f.name) :: {
-							true -> describeWithQueue(
+							true -> describeRec(
 								path + '/' + f.name
 								include?
 								getHash
