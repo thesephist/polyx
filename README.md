@@ -46,7 +46,25 @@ noct sync --remote <remote addr> <sync root dir>
 
 ### Ligature
 
-Ligature is where I take, keep, and archive all of my notes.
+Ligature is where I take, keep, and archive all of my notes. I use Ligature notes to:
+
+- Keep track of [long-term goals](https://linus.zone/goalpost)
+- Take notes while reading and browsing the web
+- Keep track of interesting conversations I have
+- Jot down ideas for projects, blog posts, and traveling
+- Remembering anything that doens't fit into a to-do list or a Google Doc
+
+Ligature is designed to be a minimal, easy-to-use graphical web interface to a directory of Markdown-style text files I use as my notes. I prefer to keep my data storage as simple and portable as possible, and encode more complex data in notation within the notes, to keep the notes portable between different devices, setups, and workflows. Ligature simply reads, updates, and manages the text files for me through the web interface, and is blind to any special notation or structure within those files, except for using the first line of each file as the "title" of the note.
+
+To start the server, run
+
+```sh
+ligature serve --db <path to notes folder>
+```
+
+The `--db` configuration is optional (defaults to CWD) and points the server to the directory containing plain-text note files. The directory is expected to only contain those files, and nothing else.
+
+Ligature is temporarily running as an systemd service, until Fortress is ready for production.
 
 ### Sigil
 
