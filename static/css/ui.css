@@ -14,7 +14,7 @@ body {
 	--frost: #F1F1F1;
 	--paper: #F9F9F9;
 	--fg: #222;
-	--light: #555;
+	--light: #777;
 }
 
 .card {
@@ -75,6 +75,11 @@ input[type="submit"] {
 	color: var(--fg);
 	text-decoration: none;
 	cursor: pointer;
+}
+
+a.card:hover,
+input[type="submit"].card:hover {
+	opacity: .75;
 }
 
 .bg {

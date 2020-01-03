@@ -43,6 +43,7 @@ render := (dbPath, query, cb) => exec('sh', ['-c', f('grep -sil "{{ query }}" {{
 
 				notes := map(matchedFiles, fileInfo => {
 					label: split(fileInfo.name, '.').0
+					mod: fileInfo.mod
 					firstLine: '...?'
 				})
 
@@ -83,7 +84,7 @@ Template := (notes, query) => f('
 	<header>
 		<a href="/" class="title">ligature</a>
 		<form action="/find" method="GET" class="searchBar card">
-			<input type="text" name="q" placeholder="search..." class="searchInput paper block" value="{{ query }}"/>
+			<input type="text" name="q" placeholder="search..." class="searchInput paper block" value="{{ query }}" autofocus/>
 			<input type="submit" value="find" class="frost block"/>
 		</form>
 		<a href="/new" class="newButton frost card block">new</a>
@@ -92,6 +93,7 @@ Template := (notes, query) => f('
 	<ul class="noteList">
 		{{ noteCards }}
 	</ul>
+	<script src="/static/js/ligature.js"></script>
 </body>
 ', {
 	head: HeadTemplate(f('find "{{ query }}" | ligature', {query: query}))

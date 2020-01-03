@@ -22,7 +22,7 @@ Template := () => f('
 
 		<div class="card">
 			<div class="frost block light">label</div>
-			<input type="text" name="label" class="paper block" placeholder="new-note" autofocus>
+			<input type="text" name="label" class="paper block" placeholder="new-note" required autofocus>
 		</div>
 	</form>
 </body>

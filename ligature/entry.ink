@@ -67,26 +67,31 @@ addRoute('/new', params => (req, end) => req.method :: {
 
 		label := pctDecode(cleanNoteLabel(trimPrefix(req.body, 'label=')))
 		path := Config.dbPath + '/' + label + '.md'
-
-		readFile(path, file => file :: {
-			() -> writeFile(path, '', r => r :: {
-				true -> (Pages.note.render)(Config.dbPath, label, html => end({
-					status: 200
-					headers: {
-						'Content-Type': 'text/html'
-					}
-					body: html
-				}))
+		label :: {
+			'' -> end({
+				status: 400
+				body: 'label must not be empty'
+			})
+			_ -> readFile(path, file => file :: {
+				() -> writeFile(path, '', r => r :: {
+					true -> (Pages.note.render)(Config.dbPath, label, html => end({
+						status: 200
+						headers: {
+							'Content-Type': 'text/html'
+						}
+						body: html
+					}))
+					_ -> end({
+						status: 500
+						body: 'error creating note'
+					})
+				})
 				_ -> end({
-					status: 500
-					body: 'error creating note'
+					status: 409
+					body: f('{{ label }} already exists', {label: label})
 				})
 			})
-			_ -> end({
-				status: 401
-				body: f('{{ label }} already exists', {label: label})
-			})
-		})
+		}
 	)
 	_ -> end({
 		status: 405

@@ -11,7 +11,10 @@ header {
 	justify-content: space-between;
 	align-items: center;
 	padding: 0 12px;
-	overflow: hidden;
+}
+
+textarea {
+	resize: none;
 }
 
 .title {
@@ -54,4 +57,15 @@ header {
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
+}
+
+.noteMeta {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.modDate {
+	margin-left: auto;
 }

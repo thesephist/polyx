@@ -24,7 +24,9 @@ Template := (label, content) => f('
 	<form action="/note/{{ label }}" method="POST" class="noteEditForm">
 		<header>
 			<a href="/" class="title">&larr; ligature</a>
-			<input type="submit" value="save" class="frost card block"/>
+			<a href="/new" class="newButton frost card block"
+				style="margin-left: auto; margin-right: 12px">new</a>
+			<input type="submit" value="save" class="saveButton frost card block"/>
 		</header>
 
 		<div class="noteEditor card">
@@ -32,6 +34,7 @@ Template := (label, content) => f('
 			<textarea name="content" class="paper block" autofocus>{{ content }}</textarea>
 		</div>
 	</form>
+	<script src="/static/js/ligature.js"></script>
 </body>
 ', {
 	head: HeadTemplate(label + ' | ligature')

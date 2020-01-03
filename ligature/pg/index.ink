@@ -23,6 +23,7 @@ render := (dbPath, cb) => dir(dbPath, evt => evt.type :: {
 
 		notes := map(evt.data, fileInfo => {
 			label: split(fileInfo.name, '.').0
+			mod: fileInfo.mod
 			firstLine: '...?'
 		})
 
@@ -60,7 +61,7 @@ Template := notes => f('
 	<header>
 		<a href="/" class="title">ligature</a>
 		<form action="/find" method="GET" class="searchBar card">
-			<input type="text" name="q" placeholder="search..." class="searchInput paper block"/>
+			<input type="text" name="q" placeholder="search..." class="searchInput paper block" autofocus/>
 			<input type="submit" value="find" class="frost block"/>
 		</form>
 		<a href="/new" class="newButton frost card block">new</a>
@@ -69,6 +70,7 @@ Template := notes => f('
 	<ul class="noteList">
 		{{ noteCards }}
 	</ul>
+	<script src="/static/js/ligature.js"></script>
 </body>
 ', {
 	head: HeadTemplate('ligature')
