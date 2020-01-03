@@ -52,6 +52,9 @@ render := (dbPath, query, cb) => exec('sh', ['-c', f('grep -sil "{{ query }}" {{
 					count: 0
 					total: len(notes)
 				}
+				len(notes) :: {
+					0 -> cb(Template(notes, query))
+				}
 				each(notes, n => readFile(dbPath + '/' + n.label + '.md', file => (
 					file :: {
 						() -> n.firstLine := 'error reading...'

@@ -31,6 +31,9 @@ render := (dbPath, cb) => dir(dbPath, evt => evt.type :: {
 			count: 0
 			total: len(notes)
 		}
+		len(notes) :: {
+			0 -> cb(Template(notes))
+		}
 		each(notes, n => readFile(dbPath + '/' + n.label + '.md', file => (
 			file :: {
 				() -> n.firstLine := 'error reading...'
