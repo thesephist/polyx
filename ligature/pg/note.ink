@@ -2,7 +2,6 @@
 
 std := load('../../vendor/std')
 str := load('../../vendor/str')
-log := std.log
 f := std.format
 readFile := std.readFile
 
@@ -22,14 +21,14 @@ Template := (label, content) => f('
 {{ head }}
 
 <body>
-	<form action="/note/{{ label }}" method="PUT" class="noteEditForm">
+	<form action="/note/{{ label }}" method="POST" class="noteEditForm">
 		<header>
 			<a href="/" class="title">&larr; ligature</a>
 			<input type="submit" value="save" class="frost card block"/>
 		</header>
 
 		<div class="noteEditor card">
-			<div class="frost block">{{ label }}</div>
+			<div class="frost block light">{{ label }}</div>
 			<textarea name="content" class="paper block" autofocus>{{ content }}</textarea>
 		</div>
 	</form>

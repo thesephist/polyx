@@ -1,15 +1,23 @@
 ` ligature server `
 
 std := load('../vendor/std')
+str := load('../vendor/str')
 log := std.log
 f := std.format
+reduce := std.reduce
+cat := std.cat
 readFile := std.readFile
 writeFile := std.writeFile
+letter? := str.letter?
+digit? := str.digit?
+trimPrefix := str.trimPrefix
 
 http := load('../lib/http')
 cli := load('../lib/cli')
 mime := load('../lib/mime')
+percent := load('../lib/percent')
 mimeForPath := mime.forPath
+pctDecode := percent.decode
 
 Pages := {
 	index: load('pg/index')
@@ -47,6 +55,39 @@ addRoute('/new', params => (req, end) => req.method :: {
 		}
 		body: html
 	}))
+	'POST' -> (
+		cleanNoteLabel := label => reduce(
+			label
+			(acc, c) => (letter?(c) | digit?(c) | c = '-') :: {
+				true -> acc + c
+				false -> acc + '-'
+			}
+			''
+		)
+
+		label := pctDecode(cleanNoteLabel(trimPrefix(req.body, 'label=')))
+		path := Config.dbPath + '/' + label + '.md'
+
+		readFile(path, file => file :: {
+			() -> writeFile(path, '', r => r :: {
+				true -> (Pages.note.render)(Config.dbPath, label, html => end({
+					status: 200
+					headers: {
+						'Content-Type': 'text/html'
+					}
+					body: html
+				}))
+				_ -> end({
+					status: 500
+					body: 'error creating note'
+				})
+			})
+			_ -> end({
+				status: 401
+				body: f('{{ label }} already exists', {label: label})
+			})
+		})
+	)
 	_ -> end({
 		status: 405
 		body: 'method not allowed'
@@ -61,24 +102,27 @@ addRoute('/note/:label', params => (req, end) => req.method :: {
 		body: html
 	}))
 	'POST' -> (
-		'create note'
-		end({
-			status: 501
-			body: 'not implemented'
-		})
-	)
-	'PUT' -> (
-		'update note, effectively same as POST with dif resp code'
-		end({
-			status: 501
-			body: 'not implemented'
-		})
-	)
-	'DELETE' -> (
-		'delete note'
-		end({
-			status: 501
-			body: 'not implemented'
+		label := params.label
+		content := pctDecode(trimPrefix(req.body, 'content='))
+		path := Config.dbPath + '/' + label + '.md'
+		readFile(path, file => file :: {
+			() -> end({
+				status: 401
+				body: f('{{ label }} does not exist', {label: label})
+			})
+			_ -> writeFile(path, content, r => r :: {
+				true -> (Pages.note.render)(Config.dbPath, label, html => end({
+					status: 200
+					headers: {
+						'Content-Type': 'text/html'
+					}
+					body: html
+				}))
+				_ -> end({
+					status: 500
+					body: 'error saving note'
+				})
+			})
 		})
 	)
 	_ -> end({

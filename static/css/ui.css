@@ -14,6 +14,7 @@ body {
 	--frost: #F1F1F1;
 	--paper: #F9F9F9;
 	--fg: #222;
+	--light: #555;
 }
 
 .card {
@@ -26,7 +27,12 @@ body {
 }
 
 .block {
-	padding: 12px;
+	padding: 8px 12px;
+}
+
+.light {
+	color: var(--light);
+	font-size: .825rem;
 }
 
 body {
@@ -41,7 +47,7 @@ body,
 input[type="text"],
 input[type="submit"],
 textarea {
-	font-size: 1em;
+	font-size: 1rem;
 	color: var(--fb);
 	font-family: var(--ff);
 	border: 0;
