@@ -1,0 +1,84 @@
+/* polyx */
+
+body,
+html,
+form {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	--ff: 'Barlow', system-ui, 'Helvetica', sans-serif;
+
+	--bg: #d9d9d9;
+	--frost: #F1F1F1;
+	--paper: #F9F9F9;
+	--fg: #222;
+}
+
+.card {
+	display: block;
+	margin: 12px;
+	padding: 0;
+	border-radius: 6px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, .08);
+	overflow: hidden;
+}
+
+.block {
+	padding: 12px;
+}
+
+body {
+	background: var(--bg);
+}
+
+html {
+	font-size: 18px;
+}
+
+body,
+input[type="text"],
+input[type="submit"],
+textarea {
+	font-size: 1em;
+	color: var(--fb);
+	font-family: var(--ff);
+	border: 0;
+	margin: 0;
+	outline: 0;
+}
+
+input[type="text"] {
+	width: 100%;
+}
+
+textarea {
+	height: 100%;
+	flex-grow: 1;
+}
+
+ul,
+ol {
+	margin: 0;
+	padding-left: 0;
+}
+
+a,
+input[type="submit"] {
+	color: var(--fg);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.bg {
+	background: var(--bg);
+}
+
+.frost {
+	background: var(--frost);
+}
+
+.paper {
+	background: var(--paper);
+}

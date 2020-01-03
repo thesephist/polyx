@@ -3,11 +3,17 @@
 std := load('../vendor/std')
 str := load('../vendor/str')
 
+log := std.log
 slice := std.slice
 sliceList := std.sliceList
+each := std.each
+map := std.map
 cat := std.cat
 filter := std.filter
 split := str.split
+
+percent := load('percent')
+pctDecode := percent.decode
 
 new := () => []
 
@@ -19,11 +25,23 @@ splitPath := url => filter(split(url, '/'), s => ~(s = ''))
 ` if path matches pattern, return a hash of matched params.
 	else, return () `
 matchPath := (pattern, path) => (
+	params := {}
+
+	` process query parameters `
+	pathParts := split(path, '?')
+	path := pathParts.0
+	pathParts.1 :: {
+		() -> ()
+		_ -> (
+			queries := map(split(pathParts.1, '&'), pair => split(pair, '='))
+			each(queries, pair => params.(pair.0) := pctDecode(pair.1))
+		)
+	}
+
 	desired := splitPath(pattern)
 	actual := splitPath(path)
 
 	max := len(desired)
-	params := {}
 	findMatchingParams := (sub := i => i :: {
 		max -> params
 		_ -> (

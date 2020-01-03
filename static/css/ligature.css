@@ -1,0 +1,57 @@
+/* polyx/ligature */
+
+body {
+	max-width: 840px;
+	margin: 0 auto;
+}
+
+header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0 12px;
+	overflow: hidden;
+}
+
+.title {
+	font-weight: bold;
+}
+
+.searchBar {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.searchInput {
+	/* webkit inserts weird margin */
+	margin-right: -3px;
+	width: 0;
+	flex-grow: 1;
+}
+
+.newButton {
+	/* collapse margins */
+	margin: 0;
+}
+
+.noteList {
+	margin-top: -12px;
+}
+
+.noteEditForm {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	padding-top: 12px;
+	box-sizing: border-box;
+}
+
+.noteEditor {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}

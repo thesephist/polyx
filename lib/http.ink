@@ -27,10 +27,9 @@ new := () => (
 			'error' -> log('server start error: ' + evt.message)
 			'req' -> (
 				log(f('{{ method }}: {{ url }}', evt.data))
-				url := trimQP(evt.data.url)
 
 				handleWithHeaders := evt => (
-					handler := (route.match)(router, url)
+					handler := (route.match)(router, evt.data.url)
 					handler(evt.data, resp => (
 						resp.headers := hdr(resp.headers :: {
 							() -> {}

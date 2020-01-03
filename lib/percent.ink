@@ -44,6 +44,9 @@ decode := str => (
 	}
 	reduce(str, (decoded, curr) => s.stage :: {
 		0 -> curr :: {
+			'+' -> (
+				decoded + ' '
+		    )
 			'%' -> (
 				s.stage := 1
 				decoded

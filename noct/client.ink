@@ -4,8 +4,8 @@
 
 std := load('../vendor/std')
 json := load('../vendor/json')
-f := std.format
 log := std.log
+f := std.format
 each := std.each
 readFile := std.readFile
 writeFile := std.writeFile
@@ -158,7 +158,6 @@ sync := opts => args => (
 	))
 )
 
-` cli main: switch on given verb `
 given := (cli.parsed)()
 given.verb :: {
 	'desc' -> desc(given.opts)(given.args)
