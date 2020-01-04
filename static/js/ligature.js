@@ -15,8 +15,8 @@ if (noteEditor) {
     // save button should not prevent leaving the page
     $('.saveButton').addEventListener('click', () => noteChanged = false);
 
+    noteEditor.addEventListener('input', evt => noteChanged = true);
     noteEditor.addEventListener('keydown', evt => {
-        noteChanged = true;
         if (evt.key === 'Tab') {
             evt.preventDefault();
             const idx = evt.target.selectionStart;
