@@ -71,6 +71,10 @@ ol {
     list-style: none;
 }
 
+input[type="submit"] {
+    -webkit-appearance: none;
+}
+
 a,
 input[type="submit"] {
     color: var(--fg);
