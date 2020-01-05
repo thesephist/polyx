@@ -68,7 +68,12 @@ Ligature is temporarily running as an systemd service, until Fortress is ready f
 
 ### Sigil
 
-Sigil is a task manager and to-do list specifically designed for my workflow.
+Sigil is a task manager and to-do list specifically designed for my workflow. I've used basically every popular task manager out there from Things to Wunderlist, Trello, Apple Reminders, and even pen-and-paper. Most recently, I used Todoist, which has fit my workflow best. Since 2015, I've used Todoist as my full-time and only task manager. But even that doesn't exactly cater to the way I want to work. So Sigil is designed for me, and nobody else, to fit my existing workflow. This mean Sigil has some quirks as a consequence of how I organize tasks.
+
+- Tasks have no notion of reminders or due dates (I use neither), but instead have granular priorities.
+- There are no notion of "projects" or "categories" of tasks that are separate lists. Tasks may be tagged, but they all exist in one singular list.
+- Tasks and comments underneath tasks are plain text or simple markup.
+- The flow is optimized for fast entry of ideas into the database, and then efficient triaging and organization after the fact of even very large task queues.
 
 ### Nought
 
