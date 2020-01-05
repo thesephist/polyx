@@ -109,7 +109,7 @@ To provision a Fortress server:
 4. Create a target Noct sync directory with `mkdir ~/noctd` (`~/noctd` is the conventional noct sync directory name, but you can choose something else.)
 5. Clone the Polyx source repository into `~/noctd/src`. You can do this by cloning first, then mv-ing the directory. `git clone https://github.com/thesephist/polyx; mv ~/noctd/polyx ~/noctd/src`
 6. Install the Fortress systemd service file with `cp ~/noctd/src/fortress/fortress.service /etc/systemd/system/fortress.service`
-7. Start up Fortress as a systemd daemon with `sudo systemctl start fortress`
+7. Start up Fortress as a systemd daemon with `sudo systemctl start fortress`. If you want to ensure the service always starts on boot, also run `sudo systemctl enable fortress`.
 8. Install and setup `certbot` to get and auto-renew HTTPS certs for all set-up domains.
 
 ### Extras
