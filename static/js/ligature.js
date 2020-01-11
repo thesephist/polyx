@@ -52,9 +52,9 @@ function getDistance(date) {
     } else if (delta < 86400 * 7) {
         return `${~~(delta / 86400)}d`
     } else if (delta < 86400 * 30) {
-        return `${~~(delta / 86400 * 7)}m`
+        return `${~~(delta / 86400 / 7)}m`
     } else {
-        return `${~~(delta / 86400 * 365)}y`
+        return `${~~(delta / 86400 / 365)}y`
     }
 }
 
