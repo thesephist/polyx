@@ -5,7 +5,6 @@ str := load('../vendor/str')
 
 log := std.log
 slice := std.slice
-sliceList := std.sliceList
 each := std.each
 map := std.map
 cat := std.cat
@@ -60,7 +59,7 @@ matchPath := (pattern, path) => (
 					sub(i + 1)
 				)
 				'*' -> (
-					params.(slice(desiredPart, 1, len(desiredPart))) := cat(sliceList(actual, i, len(actual)), '/')
+					params.(slice(desiredPart, 1, len(desiredPart))) := cat(slice(actual, i, len(actual)), '/')
 					params
 				)
 				_ -> desiredPart :: {

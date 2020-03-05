@@ -10,7 +10,6 @@ each := std.each
 filter := std.filter
 range := std.range
 slice := std.slice
-sliceList := std.sliceList
 split := str.split
 replace := str.replace
 readFile := std.readFile
@@ -217,7 +216,7 @@ ensureParentDirExists := (path, cb) => (
 	len(parts) :: {
 		1 -> cb(true) ` no dirs need be created `
 		_ -> (
-			parentDir := cat(sliceList(parts, 0, len(parts) - 1), '/')
+			parentDir := cat(slice(parts, 0, len(parts) - 1), '/')
 			make(parentDir, evt => evt.type :: {
 				'error' -> cb(())
 				_ -> cb(true)

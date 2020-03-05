@@ -6,7 +6,6 @@ str := load('../vendor/str')
 
 each := std.each
 slice := std.slice
-sliceList := std.sliceList
 hasPrefix? := str.hasPrefix?
 
 maybeOpt := part => true :: {
@@ -27,7 +26,7 @@ parsed := () => (
 	as := args()
 
 	verb := as.2
-	rest := sliceList(as, 3, len(as))
+	rest := slice(as, 3, len(as))
 
 	opts := {}
 	args := []
