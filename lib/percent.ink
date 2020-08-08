@@ -46,7 +46,7 @@ decode := str => (
 		0 -> curr :: {
 			'+' -> (
 				decoded + ' '
-		    )
+			)
 			'%' -> (
 				s.stage := 1
 				decoded
