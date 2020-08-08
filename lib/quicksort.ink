@@ -1,64 +1,55 @@
-` quicksort adopted from https://en.wikipedia.org/wiki/Quicksort `
+` minimal quicksort implementation
+	using hoare partition `
 
 std := load('../vendor/std')
-clone := std.clone
+
 map := std.map
+clone := std.clone
 
-` main recursive quicksort routine `
-quicksort := (list, values, lo, hi) => lo < hi :: {
-	true -> (
-		p := partition(list, values, lo, hi)
-		quicksort(list, values, lo, p - 1)
-		quicksort(list, values, p + 1, hi)
-	)
-}
-
-` Lomuto partition scheme `
-partition := (list, values, lo, hi) => (
-	` arbitrarily pick last value as pivot `
-	pivot := values.(hi)
-	acc := {
-		i: lo
-	}
-
-	loop := j => j :: {
-		hi -> ()
-		_ -> (
-			values.(j) < pivot :: {
+sortBy := (v, pred) => (
+	vPred := map(v, pred)
+	partition := (v, lo, hi) => (
+		pivot := vPred.(lo)
+		lsub := i => (vPred.(i) < pivot) :: {
+			true -> lsub(i + 1)
+			false -> i
+		}
+		rsub := j => (vPred.(j) > pivot) :: {
+			true -> rsub(j - 1)
+			false -> j
+		}
+		(sub := (i, j) => (
+			i := lsub(i)
+			j := rsub(j)
+			(i < j) :: {
+				false -> j
 				true -> (
-					swap(list, values, acc.i, j)
-					acc.i := acc.i + 1
+					` inlined swap! `
+					tmp := v.(i)
+					tmpPred := vPred.(i)
+					v.(i) := v.(j)
+					v.(j) := tmp
+					vPred.(i) := vPred.(j)
+					vPred.(j) := tmpPred
+
+					sub(i + 1, j - 1)
 				)
 			}
-			loop(j + 1)
-		)
-	}
-	
-	loop(lo)
-
-	swap(list, values, acc.i, hi)
-	acc.i
+		))(lo, hi)
+	)
+	(quicksort := (v, lo, hi) => len(v) :: {
+		0 -> v
+		_ -> (lo < hi) :: {
+			false -> v
+			true -> (
+				p := partition(v, lo, hi)
+				quicksort(v, lo, p)
+				quicksort(v, p + 1, hi)
+			)
+		}
+	})(v, 0, len(v) - 1)
 )
 
-` swap two places in a given list `
-swap := (list, values, i, j) => (
-	last := {
-		i: list.(i)
-		j: list.(j)
-	}
-	vlast := {
-		i: values.(i)
-		j: values.(j)
-	}
-	list.(i) := last.j
-	list.(j) := last.i
-	values.(i) := vlast.j
-	values.(j) := vlast.i
-)
+sort! := v => sortBy(v, x => x)
 
-` top-level sorting function for QuickSort `
-sortInPlace := (list, predicate) => (
-	quicksort(list, map(list, predicate), 0, len(list) - 1)
-	list
-)
-sort := (list, predicate) => sortInPlace(clone(list, predicate))
+sort := v => sort!(clone(v))

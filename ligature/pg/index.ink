@@ -10,7 +10,7 @@ split := str.split
 readFile := std.readFile
 
 quicksort := load('../../lib/quicksort')
-sortInPlace := quicksort.sortInPlace
+sortBy := quicksort.sortBy
 
 HeadTemplate := load('head').Template
 NoteCard := load('card').Template
@@ -19,7 +19,7 @@ render := (dbPath, cb) => dir(dbPath, evt => evt.type :: {
 	'error' -> cb('error finding notes')
 	_ -> (
 		` notes are sorted by date last modified (reverse chron) `
-		sortInPlace(evt.data, fstat => ~(fstat.mod))
+		sortBy(evt.data, fstat => ~(fstat.mod))
 
 		notes := map(evt.data, fileInfo => {
 			label: split(fileInfo.name, '.').0

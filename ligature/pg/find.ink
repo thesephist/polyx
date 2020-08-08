@@ -13,7 +13,7 @@ replace := str.replace
 trimPrefix := str.trimPrefix
 
 quicksort := load('../../lib/quicksort')
-sortInPlace := quicksort.sortInPlace
+sortBy := quicksort.sortBy
 
 HeadTemplate := load('head').Template
 NoteCard := load('card').Template
@@ -38,7 +38,7 @@ render := (dbPath, query, cb) => exec('sh', ['-c', f('grep -sil "{{ query }}" {{
 		dir(dbPath, evt => evt.type :: {
 			'error' -> cb('error finding notes')
 			_ -> (
-				sortInPlace(evt.data, fstat => ~(fstat.mod))
+				sortBy(evt.data, fstat => ~(fstat.mod))
 				matchedFiles := filter(evt.data, info => fileNameKeyed.(info.name))
 
 				notes := map(matchedFiles, fileInfo => {
