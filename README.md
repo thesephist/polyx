@@ -1,8 +1,10 @@
 # Polyx
 
-Productivity suite written from scratch in [Ink](https://github.com/thesephist/ink) on the backend and [Torus](https://github.com/thesephist/torus) on the web.
+Productivity suite written from scratch in [Ink](https://github.com/thesephist/ink) on the backend, and Ink (with [September](https://github.com/thesephist/september)) and [Torus](https://github.com/thesephist/torus) on the web.
 
 Polyx is a project currently in progress, and aims to replace all of my day-to-day productivity software with home-grown tools I can deploy anywhere that gives me 100% control over data and deployment. I can probably cover 80% of my use cases and value with existing solutions (I'm moving to Polyx from Dropbox, Simplenote, Todoist, and Pocket), but I like building my own solutions, and these tools are designed to fit my personal workflows perfectly, so I don't have to change how I work to fit my tools.
+
+I've written at length about my approach to tools and workflows [on my blog](https://thesephist.com/posts/tools/).
 
 ## Applications
 
