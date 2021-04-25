@@ -14,7 +14,7 @@ diff := (local, remote) => (
 	each(keys(local), lpath => remote.(lpath) :: {
 		() -> plan.(lpath) := 0
 		_ -> local.(lpath).hash :: {
-			(remote.(lpath).hash) -> ()
+			remote.(lpath).hash -> ()
 			_ -> local.(lpath).mod > remote.(lpath).mod :: {
 				true -> plan.(lpath) := 0
 				false -> plan.(lpath) := 1
