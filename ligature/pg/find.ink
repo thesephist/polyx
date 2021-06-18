@@ -70,7 +70,8 @@ render := (dbPath, query, cb) => exec('sh', ['-c', f('grep -sil "{{ query }}" {{
 						})('', 0)
 					}
 
-					s.count := s.count + 1 :: {
+					s.count := s.count + 1
+					s.count :: {
 						s.total -> cb(Template(notes, query))
 					}
 				)))
