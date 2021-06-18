@@ -49,7 +49,8 @@ render := (dbPath, cb) => dir(dbPath, evt => evt.type :: {
 				})('', 0)
 			}
 
-			s.count := s.count + 1 :: {
+			s.count := s.count + 1
+			s.count :: {
 				s.total -> cb(Template(notes))
 			}
 		)))
