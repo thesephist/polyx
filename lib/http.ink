@@ -17,13 +17,13 @@ new := () => (
 
 	` routes added to router here `
 
-	start := port => listen('0.0.0.0:' + string(port), evt => (
+	start := port => (
 		(route.catch)(router, params => (req, end) => end({
 			status: 404
 			body: 'service not found'
 		}))
 
-		evt.type :: {
+		listen('0.0.0.0:' + string(port), evt => evt.type :: {
 			'error' -> log('server start error: ' + evt.message)
 			'req' -> (
 				log(f('{{ method }}: {{ url }}', evt.data))
@@ -50,8 +50,8 @@ new := () => (
 					})
 				}
 			)
-		}
-	))
+		})
+	)
 
 	{
 		addRoute: (url, handler) => (route.add)(router, url, handler)
